@@ -12,6 +12,11 @@
 <body style="background-color: black;">
     <canvas id="game-of-life-canvas"></canvas>
     <script type="module">
+        var url_params = new URLSearchParams(window.location.search);
+        var mode = url_params.get('mode');
+        var cell_size = url_params.get('cell_size') === null ? 10: parseInt(url_params.get('cell_size'));
+        var width = url_params.get('width') === null ? 256: parseInt(url_params.get('width'));
+        var height = url_params.get('height') === null ? 128: parseInt(url_params.get('height'));
         // Use ES module import syntax to import functionality from the module
         // that we have compiled.
         //
@@ -51,15 +56,15 @@
             // modes
             await init();
 
-            const CELL_SIZE = 4; // px
+            const CELL_SIZE = cell_size; // px
             const GRID_COLOR = "#222222";
             const ALIVE_COLOR = "#FFFFFF";
             const DEAD_COLOR = "#000000";
 
             // And afterwards we can use all the functionality defined in wasm.
-            const universe = Universe.new(512, 256, 1);
-            const width = universe.width();
-            const height = universe.height();
+            const universe = Universe.new(width, height, mode === 'rule' ? 0 : 1);
+            // const width = universe.width();
+            // const height = universe.height();
 
             // Give the canvas room for all of our cells and a 1px border
             // around each of them.
@@ -100,7 +105,7 @@
             // ...
 
             const getIndex = (row, column) => {
-            return row * width + column;
+                return row * width + column;
             };
 
             const drawCells = () => {
