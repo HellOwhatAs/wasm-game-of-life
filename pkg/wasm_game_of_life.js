@@ -49,7 +49,7 @@ function addHeapObject(obj) {
 /**
 */
 export function main() {
-    wasm.main();
+    wasm.get_memory();
 }
 
 let cachedInt32Memory0 = null;
@@ -61,13 +61,10 @@ function getInt32Memory0() {
     return cachedInt32Memory0;
 }
 /**
-* @param {number} a
-* @param {number} b
-* @returns {number}
 */
-export function add(a, b) {
-    const ret = wasm.add(a, b);
-    return ret;
+export function get_memory() {
+    // wasm.get_memory();
+    return wasm.memory;
 }
 
 function handleError(f, args) {
@@ -102,6 +99,27 @@ export class Universe {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_universe_free(ptr);
+    }
+    /**
+    * @returns {number}
+    */
+    width() {
+        const ret = wasm.universe_width(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @returns {number}
+    */
+    height() {
+        const ret = wasm.universe_height(this.__wbg_ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @returns {number}
+    */
+    cells() {
+        const ret = wasm.universe_cells(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
     */

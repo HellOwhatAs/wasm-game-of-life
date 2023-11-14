@@ -4,11 +4,8 @@
 */
 export function main(): void;
 /**
-* @param {number} a
-* @param {number} b
-* @returns {number}
 */
-export function add(a: number, b: number): number;
+export function get_memory(): void;
 /**
 */
 export enum Cell {
@@ -19,6 +16,18 @@ export enum Cell {
 */
 export class Universe {
   free(): void;
+/**
+* @returns {number}
+*/
+  width(): number;
+/**
+* @returns {number}
+*/
+  height(): number;
+/**
+* @returns {number}
+*/
+  cells(): number;
 /**
 */
   tick(): void;
@@ -39,12 +48,15 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly main: () => void;
   readonly __wbg_universe_free: (a: number) => void;
+  readonly universe_width: (a: number) => number;
+  readonly universe_height: (a: number) => number;
+  readonly universe_cells: (a: number) => number;
   readonly universe_tick: (a: number) => void;
   readonly universe_new: (a: number, b: number, c: number) => number;
   readonly universe_render: (a: number, b: number) => void;
-  readonly add: (a: number, b: number) => number;
+  readonly get_memory: () => void;
+  readonly main: () => void;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_exn_store: (a: number) => void;

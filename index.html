@@ -1,67 +1,141 @@
 <html>
-  <head>
-    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
     <style>
         #game-of-life-canvas {
             font-size: 5pt;
         }
     </style>
-  </head>
-  <body>
-    <pre id="game-of-life-canvas"></pre>
+</head>
+
+<body style="background-color: black;">
+    <canvas id="game-of-life-canvas"></canvas>
     <script type="module">
-      // Use ES module import syntax to import functionality from the module
-      // that we have compiled.
-      //
-      // Note that the `default` import is an initialization function which
-      // will "boot" the module and make it ready to use. Currently browsers
-      // don't support natively imported WebAssembly as an ES module, but
-      // eventually the manual initialization won't be required!
-      import init, { add, Universe } from './pkg/wasm_game_of_life.js';
+        // Use ES module import syntax to import functionality from the module
+        // that we have compiled.
+        //
+        // Note that the `default` import is an initialization function which
+        // will "boot" the module and make it ready to use. Currently browsers
+        // don't support natively imported WebAssembly as an ES module, but
+        // eventually the manual initialization won't be required!
+        import init, { Universe, Cell, get_memory } from './pkg/wasm_game_of_life.js';
+        // import { wasm } from "./pkg/wasm_game_of_life_bg.js";
 
-      async function run() {
-        // First up we need to actually load the wasm file, so we use the
-        // default export to inform it where the wasm file is located on the
-        // server, and then we wait on the returned promise to wait for the
-        // wasm to be loaded.
-        //
-        // It may look like this: `await init('./pkg/without_a_bundler_bg.wasm');`,
-        // but there is also a handy default inside `init` function, which uses
-        // `import.meta` to locate the wasm file relatively to js file.
-        //
-        // Note that instead of a string you can also pass in any of the
-        // following things:
-        //
-        // * `WebAssembly.Module`
-        //
-        // * `ArrayBuffer`
-        //
-        // * `Response`
-        //
-        // * `Promise` which returns any of the above, e.g. `fetch("./path/to/wasm")`
-        //
-        // This gives you complete control over how the module is loaded
-        // and compiled.
-        //
-        // Also note that the promise, when resolved, yields the wasm module's
-        // exports which is the same as importing the `*_bg` module in other
-        // modes
-        await init();
+        async function run() {
+            // First up we need to actually load the wasm file, so we use the
+            // default export to inform it where the wasm file is located on the
+            // server, and then we wait on the returned promise to wait for the
+            // wasm to be loaded.
+            //
+            // It may look like this: `await init('./pkg/without_a_bundler_bg.wasm');`,
+            // but there is also a handy default inside `init` function, which uses
+            // `import.meta` to locate the wasm file relatively to js file.
+            //
+            // Note that instead of a string you can also pass in any of the
+            // following things:
+            //
+            // * `WebAssembly.Module`
+            //
+            // * `ArrayBuffer`
+            //
+            // * `Response`
+            //
+            // * `Promise` which returns any of the above, e.g. `fetch("./path/to/wasm")`
+            //
+            // This gives you complete control over how the module is loaded
+            // and compiled.
+            //
+            // Also note that the promise, when resolved, yields the wasm module's
+            // exports which is the same as importing the `*_bg` module in other
+            // modes
+            await init();
 
-        // And afterwards we can use all the functionality defined in wasm.
-        const pre = document.getElementById("game-of-life-canvas");
-        const universe = Universe.new(256, 256, 1);
-        const renderLoop = () => {
-            pre.textContent = universe.render();
-            universe.tick();
+            const CELL_SIZE = 4; // px
+            const GRID_COLOR = "#222222";
+            const ALIVE_COLOR = "#FFFFFF";
+            const DEAD_COLOR = "#000000";
 
+            // And afterwards we can use all the functionality defined in wasm.
+            const universe = Universe.new(512, 256, 1);
+            const width = universe.width();
+            const height = universe.height();
+
+            // Give the canvas room for all of our cells and a 1px border
+            // around each of them.
+            const canvas = document.getElementById("game-of-life-canvas");
+            canvas.height = (CELL_SIZE + 1) * height + 1;
+            canvas.width = (CELL_SIZE + 1) * width + 1;
+
+            const ctx = canvas.getContext('2d');
+
+            const renderLoop = () => {
+                universe.tick();
+
+                drawGrid();
+                drawCells();
+
+                requestAnimationFrame(renderLoop);
+            };
+
+            const drawGrid = () => {
+                ctx.beginPath();
+                ctx.strokeStyle = GRID_COLOR;
+
+                // Vertical lines.
+                for (let i = 0; i <= width; i++) {
+                    ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
+                    ctx.lineTo(i * (CELL_SIZE + 1) + 1, (CELL_SIZE + 1) * height + 1);
+                }
+
+                // Horizontal lines.
+                for (let j = 0; j <= height; j++) {
+                    ctx.moveTo(0, j * (CELL_SIZE + 1) + 1);
+                    ctx.lineTo((CELL_SIZE + 1) * width + 1, j * (CELL_SIZE + 1) + 1);
+                }
+
+                ctx.stroke();
+            };
+
+            // ...
+
+            const getIndex = (row, column) => {
+            return row * width + column;
+            };
+
+            const drawCells = () => {
+                const cellsPtr = universe.cells();
+                const cells = new Uint8Array(get_memory().buffer, cellsPtr, width * height);
+
+                ctx.beginPath();
+
+                for (let row = 0; row < height; row++) {
+                    for (let col = 0; col < width; col++) {
+                    const idx = getIndex(row, col);
+
+                    ctx.fillStyle = cells[idx] === Cell.Dead
+                        ? DEAD_COLOR
+                        : ALIVE_COLOR;
+
+                    ctx.fillRect(
+                        col * (CELL_SIZE + 1) + 1,
+                        row * (CELL_SIZE + 1) + 1,
+                        CELL_SIZE,
+                        CELL_SIZE
+                    );
+                    }
+                }
+
+                ctx.stroke();
+            };
+
+            drawGrid();
+            drawCells();
             requestAnimationFrame(renderLoop);
-        };
-        requestAnimationFrame(renderLoop);
-      }
+        }
 
-      run();
+        run();
     </script>
-  </body>
-</html>
+</body>
 
+</html>
