@@ -14,9 +14,9 @@
     <script type="module">
         var url_params = new URLSearchParams(window.location.search);
         var mode = url_params.get('mode');
-        var cell_size = url_params.get('cell_size') === null ? 10: parseInt(url_params.get('cell_size'));
+        var cell_size = url_params.get('cell_size') === null ? 5: parseInt(url_params.get('cell_size'));
         var width = url_params.get('width') === null ? 256: parseInt(url_params.get('width'));
-        var height = url_params.get('height') === null ? 128: parseInt(url_params.get('height'));
+        var height = url_params.get('height') === null ? 256: parseInt(url_params.get('height'));
         // Use ES module import syntax to import functionality from the module
         // that we have compiled.
         //
